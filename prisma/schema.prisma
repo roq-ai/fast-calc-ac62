@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions      = [pgcrypto]
+}
+
+model calculator {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  password   String   @db.VarChar(255)
+  user_id    String?  @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @default(now()) @db.Timestamp(6)
+  user       user?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  locker     locker[]
+}
+
+model file {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String   @db.VarChar(255)
+  locker_id  String?  @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @default(now()) @db.Timestamp(6)
+  locker     locker?  @relation(fields: [locker_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model locker {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  calculator_id String?     @db.Uuid
+  user_id       String?     @db.Uuid
+  created_at    DateTime    @default(now()) @db.Timestamp(6)
+  updated_at    DateTime    @default(now()) @db.Timestamp(6)
+  file          file[]
+  calculator    calculator? @relation(fields: [calculator_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user          user?       @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model organization {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  description String?  @db.VarChar(255)
+  name        String   @db.VarChar(255)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @db.Timestamp(6)
+  user_id     String   @db.Uuid
+  tenant_id   String   @db.VarChar(255)
+  user        user     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String         @unique @db.VarChar(255)
+  firstName    String?        @db.VarChar(255)
+  lastName     String?        @db.VarChar(255)
+  roq_user_id  String         @db.VarChar(255)
+  tenant_id    String         @db.VarChar(255)
+  created_at   DateTime       @default(now()) @db.Timestamp(6)
+  updated_at   DateTime       @default(now()) @db.Timestamp(6)
+  calculator   calculator[]
+  locker       locker[]
+  organization organization[]
+}
